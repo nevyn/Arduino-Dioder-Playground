@@ -88,7 +88,7 @@ static CGFloat const kScreenColourCalculationInsetFraction = 0.25;
 #pragma mark -
 #pragma mark blinking is nice
 
-#define $colorize(thing) ((thing == [NSNull null] || [thing isEqual:(id)kCFBooleanFalse]) ? nil : [thing tc_color])
+#define $notnull(thing) ((thing == [NSNull null]) ? nil : thing)
 #define $castIf(klass, thing) ({ __typeof(thing) thing2 = thing; (klass*)([thing2 isKindOfClass:[klass class]]?thing2:nil); })
 
 -(void)addBlink:(NSArray*)colors duration:(NSTimeInterval)interval;
@@ -109,10 +109,10 @@ static CGFloat const kScreenColourCalculationInsetFraction = 0.25;
 {
     NSArray *colors = [desc objectForKey:@"colors"];
     NSTimeInterval interval = [[desc objectForKey:@"interval"] doubleValue];
-    [self.commsController pushColorsToChannel1:$colorize([colors objectAtIndex:0])?:self.channel1Color
-                                      channel2:$colorize([colors objectAtIndex:1])?:self.channel2Color
-                                      channel3:$colorize([colors objectAtIndex:2])?:self.channel3Color
-                                      channel4:$colorize([colors objectAtIndex:3])?:self.channel4Color
+    [self.commsController pushColorsToChannel1:$notnull([colors objectAtIndex:0])?:self.channel1Color
+                                      channel2:$notnull([colors objectAtIndex:1])?:self.channel2Color
+                                      channel3:$notnull([colors objectAtIndex:2])?:self.channel3Color
+                                      channel4:$notnull([colors objectAtIndex:3])?:self.channel4Color
                                   withDuration:0];
     
     [self.commsController pushColorsToChannel1:self.channel1Color
@@ -130,9 +130,13 @@ static CGFloat const kScreenColourCalculationInsetFraction = 0.25;
         NSLog(@"Must have userinfo 'colors' with 4 items");
         return;
     }
+    NSMutableArray *colors2 = [NSMutableArray array];
+    for(id thing in colors)
+        if([thing isKindOfClass:[NSArray class]]) [colors2 addObject:[thing tc_color]];
+        else [colors2 addObject:[NSNull null]];
     NSNumber *duration = $castIf(NSNumber, [ui objectForKey:@"interval"])?:[NSNumber numberWithDouble:.5];
     
-    [self addBlink:colors duration:[duration doubleValue]];
+    [self addBlink:colors2 duration:[duration doubleValue]];
 }
 -(IBAction)blinkRed:(id)sender;
 {
