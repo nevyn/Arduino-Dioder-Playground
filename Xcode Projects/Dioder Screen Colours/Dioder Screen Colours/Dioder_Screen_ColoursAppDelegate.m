@@ -9,13 +9,29 @@
 #import "Dioder_Screen_ColoursAppDelegate.h"
 #import "DKSerialPort.h"
 #import <QuartzCore/QuartzCore.h>
+#import "BlinkEditorWC.h"
 
 void screenDidUpdate(CGRectCount count, const CGRect *rectArray, void *userParameter);
 
 static NSTimeInterval const kScreenshotFrequency = 0.05;
 static CGFloat const kScreenColourCalculationInsetFraction = 0.25;
 
-static NSDate *lastShotTaken;
+@interface Dioder_Screen_ColoursAppDelegate ()
+@property(nonatomic,retain) NSDate *lastShotTaken;
+@property(nonatomic,retain) NSDate *delayScreenUpdatesUntil;
+@property(nonatomic,retain) BlinkEditorWC *blinkEditor;
+-(void)doBlink:(NSDictionary*)desc;
+@end
+
+@interface NSArray (TCArrayToColor)
+-(NSColor*)tc_color;
+@end
+@implementation NSArray (TCArrayToColor)
+-(NSColor*)tc_color;
+{
+    return [NSColor colorWithCalibratedRed:[[self objectAtIndex:0] floatValue] green:[[self objectAtIndex:1] floatValue] blue:[[self objectAtIndex:2] floatValue] alpha:[[self count] == 4?[self objectAtIndex:3]:[NSNumber numberWithFloat:1] floatValue]];
+}
+@end
 
 @implementation Dioder_Screen_ColoursAppDelegate
 
@@ -32,6 +48,10 @@ static NSDate *lastShotTaken;
 @synthesize channel3Color;
 @synthesize channel4Color;
 
+@synthesize lastShotTaken;
+@synthesize delayScreenUpdatesUntil;
+@synthesize blinkEditor;
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // Insert code here to initialize your application
@@ -43,10 +63,12 @@ static NSDate *lastShotTaken;
     self.commsController = [[[ArduinoDioderCommunicationController alloc] init] autorelease];
     
     [self portsChanged:nil];
-    lastShotTaken = nil;
+    self.lastShotTaken = nil;
     
     CGRegisterScreenRefreshCallback(screenDidUpdate, self);
-
+    
+    
+    [[NSDistributedNotificationCenter defaultCenter] addObserver:self selector:@selector(addBlinkNotification:) name:@"DioderBlink" object:nil suspensionBehavior:NSNotificationSuspensionBehaviorCoalesce];
 }
 
 
@@ -58,8 +80,71 @@ static NSDate *lastShotTaken;
 
 -(void)applicationWillTerminate:(NSNotification *)notification {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:DKSerialPortsDidChangeNotification object:nil];
+    [[NSDistributedNotificationCenter defaultCenter] removeObserver:self name:@"DioderBlink" object:nil];
     self.commsController = nil;
     CGUnregisterScreenRefreshCallback(screenDidUpdate, self);
+}
+
+#pragma mark -
+#pragma mark blinking is nice
+
+#define $colorize(thing) ((thing == [NSNull null] || [thing isEqual:(id)kCFBooleanFalse]) ? nil : [thing tc_color])
+#define $castIf(klass, thing) ({ __typeof(thing) thing2 = thing; (klass*)([thing2 isKindOfClass:[klass class]]?thing2:nil); })
+
+-(void)addBlink:(NSArray*)colors duration:(NSTimeInterval)interval;
+{
+    NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:colors, @"colors", [NSNumber numberWithDouble:interval], @"interval", nil];
+    interval += 0.05;
+    NSDate *doAt = [[self.delayScreenUpdatesUntil retain] autorelease];
+    self.delayScreenUpdatesUntil = [delayScreenUpdatesUntil?:[NSDate date] dateByAddingTimeInterval:interval];
+    if(!doAt)
+        [self doBlink:userInfo];
+    else {
+        NSTimer *t = [[[NSTimer alloc] initWithFireDate:doAt interval:0 target:self selector:@selector(doDelayedBlink:) userInfo:userInfo repeats:NO] autorelease];
+        [[NSRunLoop currentRunLoop] addTimer:t forMode:NSRunLoopCommonModes];
+    }
+}
+-(void)doDelayedBlink:(NSTimer*)t; { [self doBlink:[t userInfo]]; }
+-(void)doBlink:(NSDictionary*)desc;
+{
+    NSArray *colors = [desc objectForKey:@"colors"];
+    NSTimeInterval interval = [[desc objectForKey:@"interval"] doubleValue];
+    [self.commsController pushColorsToChannel1:$colorize([colors objectAtIndex:0])?:self.channel1Color
+                                      channel2:$colorize([colors objectAtIndex:1])?:self.channel2Color
+                                      channel3:$colorize([colors objectAtIndex:2])?:self.channel3Color
+                                      channel4:$colorize([colors objectAtIndex:3])?:self.channel4Color
+                                  withDuration:0];
+    
+    [self.commsController pushColorsToChannel1:self.channel1Color
+                                      channel2:self.channel2Color
+                                      channel3:self.channel3Color
+                                      channel4:self.channel4Color
+                                  withDuration:interval];
+}
+
+-(void)addBlinkNotification:(NSNotification*)notif;
+{
+    NSDictionary *ui = [notif userInfo];
+    NSArray *colors = $castIf(NSArray, [ui objectForKey:@"colors"]);
+    if([colors count] != 4) {
+        NSLog(@"Must have userinfo 'colors' with 4 items");
+        return;
+    }
+    NSNumber *duration = $castIf(NSNumber, [ui objectForKey:@"interval"])?:[NSNumber numberWithDouble:.5];
+    
+    [self addBlink:colors duration:[duration doubleValue]];
+}
+-(IBAction)blinkRed:(id)sender;
+{
+    [self addBlink:[NSArray arrayWithObjects:[NSColor greenColor], [NSColor greenColor], [NSColor redColor], [NSColor redColor], nil] duration:.5];
+    [self addBlink:[NSArray arrayWithObjects:[NSColor redColor], [NSColor redColor], [NSColor greenColor], [NSColor greenColor], nil] duration:.5];
+}
+
+-(IBAction)showBlinkEditor:(id)sender;
+{
+    if(!blinkEditor)
+        self.blinkEditor = [[[BlinkEditorWC alloc] init] autorelease];
+    [self.blinkEditor.window makeKeyAndOrderFront:nil];
 }
 
 #pragma mark -
@@ -93,15 +178,19 @@ void screenDidUpdate(CGRectCount count, const CGRect *rectArray, void *userParam
 }
 
 -(void)updateScreenColoursIfAppropriate {
-    if (lastShotTaken == nil)
+    if (self.lastShotTaken == nil)
         lastShotTaken = [NSDate new];
+        
+    if ([delayScreenUpdatesUntil compare:[NSDate date]] == NSOrderedDescending)
+        return;
+    else if (delayScreenUpdatesUntil)
+        self.delayScreenUpdatesUntil = nil;
     
     if ([[NSDate date] timeIntervalSinceDate:lastShotTaken] < kScreenshotFrequency)
         return;
     
     CGImageRef screenShot = CGWindowListCreateImage(CGRectInfinite, kCGWindowListOptionOnScreenOnly, kCGNullWindowID, kCGWindowImageDefault);
-    [lastShotTaken release];
-    lastShotTaken = [NSDate new];
+    self.lastShotTaken = [NSDate date];
     
     [self calculateColoursOfImage:screenShot];
     CGImageRelease(screenShot);

@@ -25,6 +25,7 @@ struct ArduinoDioderControlMessage {
 @property (readwrite, retain) NSColor *pendingChannel2Color;
 @property (readwrite, retain) NSColor *pendingChannel3Color;
 @property (readwrite, retain) NSColor *pendingChannel4Color;
+@property (readwrite, assign) NSTimeInterval pendingDuration;
 
 @property (readwrite, retain) NSColor *currentChannel1Color;
 @property (readwrite, retain) NSColor *currentChannel2Color;
@@ -35,7 +36,7 @@ struct ArduinoDioderControlMessage {
 -(void)writeColorsToChannel1:(NSColor *)channel1 channel2:(NSColor *)channel2 channel3:(NSColor *)channel3 channel4:(NSColor *)channel4;
 
 -(NSColor *)colorByApplyingProgress:(double)progress ofTransitionFromColor:(NSColor *)start toColor:(NSColor *)finish;
-
+-(void)sendPendingColorsInBackground:(NSNumber *)animationDuration;
 @end
 
 @implementation ArduinoDioderCommunicationController
@@ -84,6 +85,7 @@ struct ArduinoDioderControlMessage {
 @synthesize pendingChannel2Color;
 @synthesize pendingChannel3Color;
 @synthesize pendingChannel4Color;
+@synthesize pendingDuration;
 @synthesize currentChannel1Color;
 @synthesize currentChannel2Color;
 @synthesize currentChannel3Color;
@@ -112,7 +114,7 @@ struct ArduinoDioderControlMessage {
         
     } else if ([keyPath isEqualToString:@"canSendData"]) {
         if (self.canSendData && self.pendingChannel1Color) {
-            [self sendColorsWithDuration:0.0];
+            [self sendColorsWithDuration:self.pendingDuration];
             NSLog(@"[%@ %@]: %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd), @"forcing");
         }
     } else {
@@ -150,9 +152,13 @@ struct ArduinoDioderControlMessage {
     self.pendingChannel2Color = channel2;
     self.pendingChannel3Color = channel3;
     self.pendingChannel4Color = channel4;
+    self.pendingDuration = duration;
     
     if (self.canSendData)
-        [self sendColorsWithDuration:duration];
+        if (duration == 0)
+            [self sendPendingColorsInBackground:[NSNumber numberWithDouble:0]];
+        else
+            [self sendColorsWithDuration:duration];
 }
 
 -(void)sendColorsWithDuration:(NSTimeInterval)duration {
@@ -178,11 +184,11 @@ struct ArduinoDioderControlMessage {
     double animationSpeed = 1.0 / duration;
     
     while (timeSinceStartDate < duration) {
-        
-        [self writeColorsToChannel1:[self colorByApplyingProgress:timeSinceStartDate * animationSpeed ofTransitionFromColor:self.currentChannel1Color toColor:self.pendingChannel1Color]
-                           channel2:[self colorByApplyingProgress:timeSinceStartDate * animationSpeed ofTransitionFromColor:self.currentChannel2Color toColor:self.pendingChannel2Color]
-                           channel3:[self colorByApplyingProgress:timeSinceStartDate * animationSpeed ofTransitionFromColor:self.currentChannel3Color toColor:self.pendingChannel3Color]
-                           channel4:[self colorByApplyingProgress:timeSinceStartDate * animationSpeed ofTransitionFromColor:self.currentChannel4Color toColor:self.pendingChannel4Color]];
+        double  progress = timeSinceStartDate * animationSpeed;
+        [self writeColorsToChannel1:[self colorByApplyingProgress:progress ofTransitionFromColor:self.currentChannel1Color toColor:self.pendingChannel1Color]
+                           channel2:[self colorByApplyingProgress:progress ofTransitionFromColor:self.currentChannel2Color toColor:self.pendingChannel2Color]
+                           channel3:[self colorByApplyingProgress:progress ofTransitionFromColor:self.currentChannel3Color toColor:self.pendingChannel3Color]
+                           channel4:[self colorByApplyingProgress:progress ofTransitionFromColor:self.currentChannel4Color toColor:self.pendingChannel4Color]];
 
         
         timeSinceStartDate = [[NSDate date] timeIntervalSinceDate:operationStartDate];

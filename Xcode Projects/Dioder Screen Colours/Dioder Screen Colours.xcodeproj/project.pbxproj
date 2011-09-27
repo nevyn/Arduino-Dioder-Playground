@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		05324CAA1432541700DE3C63 /* BlinkEditorWC.m in Sources */ = {isa = PBXBuildFile; fileRef = 05324CA91432541700DE3C63 /* BlinkEditorWC.m */; };
+		05324CAC1432546700DE3C63 /* BlinkEditorWC.xib in Resources */ = {isa = PBXBuildFile; fileRef = 05324CAB1432546700DE3C63 /* BlinkEditorWC.xib */; };
 		5019E83314226C99007FDF7E /* ArduinoDioderCommunicationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5019E83214226C99007FDF7E /* ArduinoDioderCommunicationController.m */; };
 		50A3D49A1424E13600550605 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 50A3D4991424E13600550605 /* QuartzCore.framework */; };
 		50A6DE861423DEE8009A8B13 /* DKSerialPort.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A6DE851423DEE8009A8B13 /* DKSerialPort.m */; };
@@ -20,6 +22,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		05324CA81432541700DE3C63 /* BlinkEditorWC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlinkEditorWC.h; sourceTree = "<group>"; };
+		05324CA91432541700DE3C63 /* BlinkEditorWC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BlinkEditorWC.m; sourceTree = "<group>"; };
+		05324CAB1432546700DE3C63 /* BlinkEditorWC.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BlinkEditorWC.xib; sourceTree = "<group>"; };
 		5019E83114226C99007FDF7E /* ArduinoDioderCommunicationController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ArduinoDioderCommunicationController.h; path = ../../ArduinoDioderCommunicationController.h; sourceTree = "<group>"; };
 		5019E83214226C99007FDF7E /* ArduinoDioderCommunicationController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ArduinoDioderCommunicationController.m; path = ../../ArduinoDioderCommunicationController.m; sourceTree = "<group>"; };
 		50A3D4991424E13600550605 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -55,6 +60,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		05324CA6143253F400DE3C63 /* Blink Editor */ = {
+			isa = PBXGroup;
+			children = (
+				05324CA81432541700DE3C63 /* BlinkEditorWC.h */,
+				05324CA91432541700DE3C63 /* BlinkEditorWC.m */,
+				05324CAB1432546700DE3C63 /* BlinkEditorWC.xib */,
+			);
+			name = "Blink Editor";
+			sourceTree = "<group>";
+		};
 		50148A911422AF3B00B7D1EE /* Serial Communication */ = {
 			isa = PBXGroup;
 			children = (
@@ -110,6 +125,7 @@
 				50148A911422AF3B00B7D1EE /* Serial Communication */,
 				50DCE3ED142123D0003A3AEE /* Dioder_Screen_ColoursAppDelegate.h */,
 				50DCE3EE142123D0003A3AEE /* Dioder_Screen_ColoursAppDelegate.m */,
+				05324CA6143253F400DE3C63 /* Blink Editor */,
 				50DCE3F0142123D1003A3AEE /* MainMenu.xib */,
 				50DCE3E2142123D0003A3AEE /* Supporting Files */,
 			);
@@ -182,6 +198,7 @@
 				50DCE3E6142123D0003A3AEE /* InfoPlist.strings in Resources */,
 				50DCE3EC142123D0003A3AEE /* Credits.rtf in Resources */,
 				50DCE3F2142123D1003A3AEE /* MainMenu.xib in Resources */,
+				05324CAC1432546700DE3C63 /* BlinkEditorWC.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -196,6 +213,7 @@
 				50DC17AD1421344400DBB89D /* Dioder_Screen_ColoursAppDelegate.m in Sources */,
 				5019E83314226C99007FDF7E /* ArduinoDioderCommunicationController.m in Sources */,
 				50A6DE861423DEE8009A8B13 /* DKSerialPort.m in Sources */,
+				05324CAA1432541700DE3C63 /* BlinkEditorWC.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
