@@ -82,6 +82,7 @@ static CGFloat const kScreenColourCalculationInsetFraction = 0.25;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:DKSerialPortsDidChangeNotification object:nil];
     [[NSDistributedNotificationCenter defaultCenter] removeObserver:self name:@"DioderBlink" object:nil];
     self.commsController = nil;
+    [self.blinkEditor save];
     CGUnregisterScreenRefreshCallback(screenDidUpdate, self);
 }
 

@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface BEBlink : NSObject
+@interface BEBlink : NSObject <NSCoding>
 @property(nonatomic,retain) NSColor *bottom;
 @property(nonatomic,retain) NSColor *top;
 @property(nonatomic,retain) NSColor *left;
@@ -20,7 +20,7 @@
 @property(nonatomic,assign) NSTimeInterval duration;
 @end
 
-@interface BEBlinkSequence : NSObject
+@interface BEBlinkSequence : NSObject <NSCoding>
 @property(nonatomic,retain) NSMutableArray *blinks;
 @property(nonatomic,retain) NSString *name;
 @end
@@ -30,4 +30,5 @@
 @property(nonatomic,assign) IBOutlet NSArrayController *blinkSequencesC;
 -(id)init;
 -(IBAction)runSelection:(id)sender;
+-(void)save;
 @end
